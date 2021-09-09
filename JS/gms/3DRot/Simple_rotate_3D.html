@@ -1,0 +1,222 @@
+<!-- Created by ChillPill-->
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dragon Chiller 3D</title>
+  <style>
+
+    body {
+      margin: 0;
+    }
+
+  </style>
+</head>
+<body>
+  <canvas></canvas>
+</body>
+<script>
+
+  class Point {
+    constructor(x, y, z, s) {
+      this.x = x
+      this.y = y
+      this.z = z
+      this.s = s
+    }
+  }
+
+
+
+
+
+
+
+
+  const init = (_)=> {
+    const canvas = document.querySelector("canvas")
+    const w = canvas.width = Math.min(innerWidth, innerHeight)
+    const h = canvas.height = Math.max(innerWidth, innerHeight)
+    const ctx = canvas.getContext("2d")
+
+
+
+    const camera = new Point(0, 0, 0)
+
+
+
+    
+
+
+    const road = []
+
+    road.push(new Point(-400, -400, 200))
+    road.push(new Point(-400, 400, 100))
+    road.push(new Point(400, 400, 100))
+    road.push(new Point(400, -400, 200))
+
+
+
+
+    const e = new Point(w/2, h/2, 5, 0)
+
+
+
+
+    function projection(p) {
+
+const rotate = (obj, xangle, yangle, zangle) => {
+
+      //x rotation
+      var sinx = Math.sin(xangle);
+      var cosx = Math.cos(xangle);
+      var xx = obj.x;
+      var yx = obj.y*cosx - obj.z*sinx;
+      var zx = obj.y*sinx + obj.z*cosx;
+
+      //y rotation
+      var siny = Math.sin(yangle);
+      var cosy = Math.cos(yangle);
+      var xy = zx*siny + xx*cosy;
+      var yy = yx;
+      var zy = zx*cosy - xx*siny;
+
+      //z rotation
+      var sinz = Math.sin(zangle);
+      var cosz = Math.cos(zangle);
+      var xz = xy*cosz - yy*sinz;
+      var yz = xy*sinz + yy*cosz;
+      var zz = zy;
+
+      //это Матрица поворота. Умножается на нее вектор по определенному принципу
+      return [xz,
+        yz,
+        zz];
+    }
+
+      let turn = rotate(p, 0, e.s, 0)
+      dx = (turn[0])-camera.x
+      dy = (turn[1])-camera.y
+      dz = (turn[2])-camera.z
+      if (turn[2] < 0) dz=0.01
+      //стремится к нулю
+
+        bx = e.z*dx/dz+e.x
+        by = e.z*dy/dz+e.y
+
+      return [bx,
+        by]
+    }
+
+
+
+
+    function loop(time) {
+      ctx.fillStyle = "black"
+      ctx.fillRect(0, 0, w, h)
+
+
+      const pam = (obj) => {
+
+        ctx.beginPath()
+        ctx.strokeStyle = "cyan"
+
+        for (let i = 0; i < obj.length; ++i) {
+
+
+
+
+
+
+
+
+
+
+          if (!(road[i].z < camera.z)) {
+            let [bx,
+              by] = projection(road[i])
+
+            ctx.lineTo(bx, by)
+          }
+        }
+        let [bx,
+          by] = projection(road[0])
+        ctx.lineTo(bx, by)
+        ctx.stroke();
+
+      }
+
+
+
+
+
+      pam(road)
+
+
+      //  ctx.beginPath()
+      //    ctx.strokeStyle = "cyan"
+      //     ctx.moveTo(-w, h/2)
+      //      ctx.lineTo(w, h/2)
+      //     ctx.stroke()
+
+
+
+
+      requestAnimationFrame(loop)
+
+    }
+
+
+
+
+
+
+    let touchx,
+    touchy;
+
+    window.addEventListener("touchstart", touchStart, {
+      passive: false
+    })
+    function touchStart(q) {
+
+      touchx = q.touches[0].pageX
+      touchy = q.touches[0].pageY
+    }
+    window.addEventListener("touchmove", touchMove, {
+      passive: false
+    })
+    function touchMove(q) {
+     
+      //e.preventDefault()
+      // camera.x += 2*(touchx-q.touches[0].pageX)
+      // touchx = q.touches[0].pageX
+      e.s += 2*(touchy-q.touches[0].pageY)/100
+      touchy = q.touches[0].pageY
+
+    }
+
+
+
+
+
+
+
+    //  const pam = new Point(0, 1, 0)
+
+    //  console.log(rotate(pam,3/2*Math.PI,0,0))
+
+    //    console.log(pam)
+
+
+
+
+
+
+    loop(0)
+  }
+
+  window.onload = ()=> {
+    init()
+  }
+</script>
+</html>

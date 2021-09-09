@@ -1,0 +1,38 @@
+<script>
+	
+	const list = (from, r) => {
+
+			let expl = new RegExp(r, 'g')
+
+	/*	 */
+			return from.match(expl)
+
+		}
+	
+	
+	
+	let str = 'q(qq)w\\(w\\s*w\\)eee'
+	let str2 = '(async|function|const|let|var)\\s*\\w*?\\s*\\=?\\s*\\([^\\(\\)]*\\)\\s*(=>)?\\s*'
+	
+	let q = str2.split(/(?=[^\\][\(\[\{])|(?<=[^\\][\)\]\}])/)
+
+
+//	q = str.split(/(?=\\[swd][*]?) | (?<=\\[swd][*]?)/)
+
+//	q = str.split(/(?=\\[swd][*]?) | (?<=\\[swd][*]?)/)
+		 
+	console. log(q)
+	
+	
+	
+	
+var foo = "10000001000002";
+//console. log(list(foo, '1[01]{1,}?2(?=(.{3})*$)'))
+console. log(list(foo, '1[01]{1,}(?=(1))?2'))
+	
+	
+	
+	
+	
+	
+</script>

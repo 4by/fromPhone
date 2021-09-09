@@ -1,0 +1,20 @@
+<script>
+  
+ var event = new Event('build');
+// Подписываемся на событие
+window.addEventListener('build', function (e) { console.log("event") }, false);
+// Вызываем событие
+window.dispatchEvent(event);
+  
+var customevent = new CustomEvent("cat", {'detail': {hazcheeseburger: true}});
+//с событием можно передавать какие угодно данные
+//в данном случае мы передали свойство непосредственно самому CustomEvent
+//можно также передать,например:
+//'detail': elem.dataset.time
+//elem это HTML элемент
+window.addEventListener("cat", function(e) { console.log("createEvent") });
+window.dispatchEvent(customevent);
+//помимо выполнения функции передались
+//данные с CustomEvent
+ console.log(customevent) 
+</script>

@@ -1,0 +1,25 @@
+<script>
+	
+
+let a=[0,1,2,3,4]
+
+
+function comb(arr, from, to, j = arr.length) {
+if (!combs) {
+ var combs=[]
+}
+for (let i=0; i<j; i++) {
+inArr = Object.assign([], arr)
+inArr.splice(i,1)
+if (inArr.length<=to) 
+combs.push(inArr)
+if (inArr.length>from)
+combs = combs.concat(comb(inArr,from,to,i))
+}
+return(combs)
+}
+
+
+console.log(comb(a, 1, a.length-1))
+	
+</script>

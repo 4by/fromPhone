@@ -1,0 +1,38 @@
+<script>
+  
+  
+  //aaabbabab
+  //a - 1; b - 3
+  //есть максимальная длина(12)
+  
+  
+  function matchLetter(c, m, n) {
+  return `(?=([^${c}]*${c}){${m},${n}}[^${c}]*$)`;
+}
+
+  
+  
+  function matchTwoLetters(c1, m, c2, n) {
+  return matchLetter(c1, m, m) + matchLetter(c2, 0, n);
+}
+  
+  
+  function makeRegExp() {
+  const res = [];
+  for (let bs = 0; bs <= 4; bs++)
+    res.push(matchTwoLetters('b', bs, 'a', 12 - bs*3));
+  return new RegExp(`^(${res.join('|')})`);
+}
+  
+  
+  
+  console.log(matchLetter('a', 0, 4))
+  console.log(matchTwoLetters('a', 0, 'b', 4))
+  console.log(makeRegExp())
+  
+  
+  
+  console.log(makeRegExp().test("baaabaaa"))
+  
+  
+</script>

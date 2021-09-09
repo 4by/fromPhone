@@ -1,0 +1,38 @@
+<script>
+
+
+
+
+  class Thenable {
+    
+  constructor(num) {this.num = num;}
+  
+  then(resolve, reject) {
+   alert(resolve);
+   alert("123");
+   //запустятся при создании экземпляра
+   resolve(this.num);
+   reject(this.num);
+  }
+}
+
+new Promise((res)=>res(1))
+  .then(result => {
+    return new Thenable(result);
+  })
+  .then(alert); 
+
+
+(async () => {
+  let result = await new Thenable(1);
+  alert(result);
+})()
+
+
+
+
+
+
+
+  
+</script>

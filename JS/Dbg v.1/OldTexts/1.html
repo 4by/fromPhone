@@ -1,0 +1,29 @@
+<script>
+var demo = {
+		a: 1,
+		b: {
+			c: 2
+		}
+	}
+
+	function e() {}
+	function d() {
+		demo.qq = 23;
+	}
+	const c = ()=> {
+		demo.qq = 22; d();
+	}
+	const a = () => {
+		(function b() {
+			c();
+		})(); c();
+	}
+	a();
+
+	(function () {})();
+
+	(async () => {
+		let result = (await new Promise((resolve, reject) => {
+			resolve("got")}))
+	})();
+</script>

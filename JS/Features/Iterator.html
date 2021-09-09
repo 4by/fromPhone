@@ -1,0 +1,42 @@
+<script>
+
+var it;
+
+
+//задание итераторов через генератор
+
+
+function* gen(i) {
+  yield i;
+  yield i+1;
+  return "end";
+  yield i+2;
+}
+it=gen(1);
+//первый способ задания итератора
+//итерируется только один раз
+console. log([...it]);
+console. log([...it]);
+console.log(it[Symbol.iterator]() === it) // true;
+
+it = {
+    *[Symbol.iterator]() {
+        yield 3;
+        yield 4;
+    }
+}
+//второй способ задания итератора
+//итерируется  сколько угодно раз
+console. log([...it]);
+
+it[Symbol.iterator] = function* (i) {
+  yield 5;
+  yield 6;
+};
+//изменение итератора
+console. log([...it]);
+
+
+
+
+</script>

@@ -1,0 +1,22 @@
+<script>
+ 
+ 
+ function Obj(x, y) {
+    this.x = x;
+    this.y = y;
+    console.log(this)
+  }
+ 
+ 
+  
+  function link () {
+  Obj.apply(this, arguments)
+}
+
+
+  link(1, 2)
+  Obj(1,2)
+  var rect = new link(1,2);
+  
+  
+</script>

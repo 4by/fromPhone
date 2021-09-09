@@ -1,0 +1,19 @@
+<script>
+	
+
+let str = 'abcde12345'	
+let a = str.match(/\d/g)
+//первый способ
+
+let reg = '\\d'	
+let reg2 = new RegExp(reg,'g')
+let b = str.match(reg2)
+//второй способ
+//во втором способе возможно вставлять код
+//регулярных выражений из переменных
+
+
+console. log(a,b)
+	
+	
+</script>

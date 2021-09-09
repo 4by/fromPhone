@@ -1,0 +1,27 @@
+<script>
+
+  var age = 100;
+
+
+
+
+  function Person() {
+    this.age = 0;
+    
+    console. log(this.age);
+    
+    (() => {console. log(this.age)})();
+
+    (function growUp() {console. log(this.age)})()
+
+
+  }
+
+  var p = new Person();
+
+
+
+
+
+
+</script>

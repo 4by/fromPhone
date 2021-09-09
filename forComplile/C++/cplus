@@ -1,0 +1,9 @@
+#!/bin/bash
+clear
+clang++ $1
+if [ -f "a.out" ]; then
+mv a.out ~/forfile
+chmod +x ~/forfile/a.out
+~/forfile/a.out
+rm ~/forfile/a.out
+fi

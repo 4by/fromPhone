@@ -1,0 +1,375 @@
+<script>
+
+
+
+  var wspc = {
+    forTest: [[],
+      [0]],
+    openScope: [],
+    scopeState: [],
+    innerFunState: [],
+    excessProps: [],
+    exodus: [],
+    //должно быть не больше этого числа
+  }
+  function trace(copObj, opCl) {
+
+
+    function fixObjs(obj) {
+      for (let i in obj) {
+        if (typeof obj[i] == 'object') obj[i] = Object.assign({}, obj[i])
+      }
+    }
+    /*	function changes() {
+			while ((wspc.chanState.length) < (wspc.state.length-1)) {
+				wspc.chanState.push(objDiff(wspc.state[wspc.chanState.length], wspc.state[wspc.chanState.length+1]))
+
+			}
+		} */
+    function purge(obj) {
+      for (let i in obj) {
+        if ((wspc.excessProps.includes(i)) || (obj[i] === undefined)) delete obj[i]
+      }
+      return obj
+    }
+    function excess(obj) {
+
+
+      for (let i in obj) {
+        if (obj[i] !== undefined) wspc.excessProps.push(i)
+      }
+
+
+    }
+    function getName() {
+      let a = new Error().stack;
+
+
+
+      // let b = /(?<=at\s)(?!(getName|trace)).*?(?=\s)/g
+      let b = /(?<=at\s)(?!(getName|trace)).*/g
+
+
+      let funStack = []
+      if ((a.match(b) || []).length != 0) {
+        for (let i = 0; i < a.match(b).length; i++) {
+          funStack[i] = a.match(b)[i].replace(/http.*.html:/, '')
+
+        }
+      }
+      return funStack
+    }
+    function objDiff(pamA, pamB) {
+
+
+      let ldif = [undefined,
+        undefined]
+      let objA = Object.assign({}, pamA)
+      let objB = Object.assign({}, pamB)
+
+
+      const twoObj = (one, two, here) => {
+
+        let newL = objDiff(one[here], two[here])
+
+        if (newL[0] && len(newL[0]))
+          ldif[0] = Object.assign({[here]: newL[0]}, ldif[0])
+        else
+          ldif[0] = undefined
+
+
+        if (newL[1] && len(newL[1]))
+          ldif[1] = Object.assign({[here]: newL[1]}, ldif[1])
+        else
+          ldif[1] = undefined
+        //	console.log(Object.assign({},ldif[1]))
+      }
+
+      const makeProps = (arg) => {
+
+        if (arg.remProp)
+          ldif[0] = Object.assign({[arg.toProp]: arg.remProp
+        }, ldif[0])
+        if (arg.addProp)
+          ldif[1] = Object.assign({[arg.toProp]: arg.addProp
+        }, ldif[1])
+
+
+        //чтобы было видно последнее свойство обьекта
+      }
+
+
+      function arrDiff(arrA, arrB) {
+        if (arrA.length == arrB.length) {
+          let i;
+          for (i = 0; i < (arrA.length); i++) {
+            if (arrA[i] == arrB[i]) continue
+            else if (Array.isArray(arrA[i]) && Array.isArray(arrB[i])) {
+              let a = arrA[0]
+              if (arrDiff(arrA[i], arrB[i])) continue
+              else return false
+            } else return false
+          }
+          if (i == (arrA.length)) return true
+          else return false
+        } else return false
+      }
+      const objNotArr = (obj) => {
+        if ((typeof obj == 'object') && (!Array.isArray(obj))) return true
+        else return false
+      }
+      const len = (obj) => Object.keys(obj).length;
+
+      if (!objNotArr(objA) || !objNotArr(objB)) {
+        throw new SyntaxError("Данные разных типов: введенные аргументы не сопоставимы");
+      } else {
+        for (let i in objA) {
+          for (let j in objB) {
+            if (i == j) {
+              if (objA[i] != objB[i]) {
+                //ничего не делаем с равными значениями
+                if (objNotArr(objA[i]) && objNotArr(objB[i]))
+                  twoObj(objA, objB, i)
+                //два обьекта немассива
+                else if ((!((Array.isArray(objA[i])) && (Array.isArray(objB[i])))) || (!(arrDiff(objA[i], objB[i])))) {
+                  makeProps({
+                    remProp: objA[i], addProp: objB[i], toProp: i
+                  })
+                }
+                //два массива которые неравны и все остальное
+
+              }
+              delete objA[i]; delete objB[j];
+              break
+            }
+          }
+        }
+        if (len(objA) > 0) {
+          for (let i in objA) makeProps({
+            toProp: i, remProp: objA[i]})
+        }
+        if (len(objB) > 0) {
+          for (let j in objB) {
+            makeProps({
+              toProp: j, addProp: objB[j]})
+          }
+        }
+        if (len(ldif) > 0)
+          return ldif
+      }
+    }
+
+
+    let toLastInArr = (arr, pos, elem) => {
+      arr = Object.assign([], arr)
+      pos == 0? arr.push(elem): arr[arr.length-1] = toLastInArr(arr[arr.length-1], pos-1, elem)
+      /*если последний элемент - не массив, то он его заменяет
+если массив, то пушит
+возможно надо будет пофиксить*/
+      return arr
+    }
+
+
+
+
+
+
+
+
+
+
+    
+    
+    
+    
+
+    if (wspc.excessProps.length == 0) excess(copObj)
+    let obj = (purge(copObj))
+    fixObjs(obj)
+
+    if (wspc.scopeState.length > 1) {
+      let lastDiff = objDiff(wspc.scopeState.pop(), obj)
+      if (!lastDiff.every(e => !e)) wspc.openScope[wspc.openScope.length-1].push(lastDiff)
+    }
+    wspc.scopeState.push(obj);
+
+    let funPath = getName()
+
+    if (opCl == '{') {
+      wspc.openScope.push([])
+
+
+
+      wspc.forTest[0] = toLastInArr(wspc.forTest[0], wspc.forTest[1]++, [funPath[0]])
+//в самый глубокий массив (массив, глубина, что)
+
+
+
+
+
+
+    } else if (opCl == '}') {
+
+      let lastChange = wspc.openScope.pop()
+
+      wspc.innerFunState.push(lastChange)
+
+
+      let i = wspc.innerFunState.length-1
+      wspc.exodus[i+': '+funPath[0]] = [];
+      if (wspc.innerFunState[i]) wspc.exodus[i+': '+funPath[0]]['changes'] = wspc.innerFunState[i]
+
+
+
+
+      wspc.forTest[1]--
+      /*
+			wspc.forTest[0] = toLastInArr(wspc.forTest[0], wspc.forTest[1]--, lastChange)
+				сделаем читабельный вид (массп. объект или объект)
+				(по рисунку)
+			*/
+    }
+
+
+
+
+
+
+
+  }
+
+
+
+  trace(Object.assign({}, this))
+
+
+
+
+
+
+
+
+
+  /*
+
+	var demo = {
+		a: 1,
+		b: {
+			c: 2
+		}
+	}
+
+	function e() {
+		trace(Object.assign({}, this), '{');
+		trace(Object.assign({}, this), '}');
+	}
+	function d() {
+		trace(Object.assign({}, this), '{');
+		demo.b = 23;
+
+		trace(Object.assign({}, this), '}');
+	}
+	const c = ()=> {
+		trace(Object.assign({}, this), '{');
+	//	demo.b = 22;
+		demo.b = 24;
+		d();
+
+		trace(Object.assign({}, this), '}');
+	}
+	const a = () => {
+		trace(Object.assign({}, this), '{');
+		demo.b = 20;
+		(function b() {
+			trace(Object.assign({}, this), '{');
+			demo.b = 21
+			c();
+
+			trace(Object.assign({}, this), '}');
+		})();
+		//	alert(demo.qq)
+  //		e();
+		c();
+	//	d();
+		demo.b = 24;
+
+		trace(Object.assign({}, this), '}');
+	}
+	a();
+
+	(function () {
+		trace(Object.assign({}, this), '{');
+		trace(Object.assign({}, this), '}');
+	})();
+
+	(async () => {
+		trace(Object.assign({}, this), '{');
+		let result = (await new Promise((resolve, reject) => {
+			resolve("got")}))
+
+		trace(Object.assign({}, this), '}');
+	})();
+*/
+
+
+
+  var demo = {
+    a: 1,
+    b: {
+      c: 2
+    }
+  }
+
+  function e() {
+    trace(Object.assign({}, this), '{');
+    trace(Object.assign({}, this), '}');
+  }
+  function d() {
+    trace(Object.assign({}, this), '{');
+    demo.b = 23;
+
+    trace(Object.assign({}, this), '}');
+  }
+  const c = ()=> {
+    trace(Object.assign({}, this), '{');
+    demo.b = 22; d();
+
+    trace(Object.assign({}, this), '}');
+  }
+  const a = () => {
+    trace(Object.assign({}, this), '{');
+    demo.b = 20;
+    (function b() {
+      trace(Object.assign({}, this), '{');
+      demo.b = 21
+      c();
+
+      trace(Object.assign({}, this), '}');
+    })();
+    //	alert(demo.qq)
+    c();
+
+    trace(Object.assign({}, this), '}');
+  }
+  a();
+
+  (function () {
+    trace(Object.assign({}, this), '{');
+    trace(Object.assign({}, this), '}');
+  })();
+
+  (async () => {
+    trace(Object.assign({}, this), '{');
+    let result = (await new Promise((resolve, reject) => {
+      resolve("got")}))
+
+    trace(Object.assign({}, this), '}');
+  })();
+
+
+
+
+  console.log(wspc)
+
+
+</script>

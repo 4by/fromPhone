@@ -1,0 +1,36 @@
+<script>
+
+
+
+let xs=[2,2,3,4]
+//console.log(xs.slice(1))
+//console.log([1].slice(1))
+
+
+		function perm(arr) {
+    if (arr.length > 1) {
+        var arrPiece = perm(arr.slice(1));
+        var outputArr = [];
+        for(var i=0; i < arrPiece.length; i++) {
+            for(var j=0; j <= arrPiece[0].length; j++) {
+             elem = arrPiece[i].slice(0, j).concat(arr[0], arrPiece[i].slice(j))
+             if (arrPiece[i][j-1] == arr[0]) break
+             //учитывает повторения
+             outputArr.push(elem);
+            }
+        }
+        return outputArr;
+    } else return [arr];
+}
+//берет подмассив с конца и число перед ним
+//пропускает число сквозь подмассив,
+//образуя вариации перестановок
+//сквозь каждую такую перестановку пропускает предыдущее число,
+//образуя новые перестановки и так до начала
+
+console.log(perm(xs));
+
+
+
+
+</script>

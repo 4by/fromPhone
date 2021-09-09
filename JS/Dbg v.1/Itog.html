@@ -1,0 +1,276 @@
+<script>
+
+
+
+	fetch('pullTextFromHere.html')
+	.then(response => response.text())
+	.then(fullText => {
+		let reg = /(?<=\<script\>)(\n|.)*(?=\<\/script\>)/g
+		return fullText.match(reg)
+		//return (fullText)
+	}
+	)
+	.then(insideScript => {
+
+		var cou = 0
+
+
+		const valueOfAfter = '(\\n*\\s*\\(\\))?'
+
+		function getSegments(from, scopes, after = '') {
+			/*
+			after красивее было бы сделать как третий аргумент в scopes
+			Добавили в конец его, чтобы было удобно задавать значение по умолчанию
+			*/
+			let arrFun = []
+			let negs = []
+			let beg = scopes[0]+'\\'+scopes[1][0]
+			let mid = '[^\\'+scopes[1][0]+'\\'+scopes[1][1]+']*(?<!'+scopes[0]+')[\\'+scopes[1][0]+'\\'+scopes[1][1]+']'
+			//ищет скобку, которая следует не после объявления функции
+			//Так мы избегаем вложенных функций
+			//(возможно тут удобнее сразу закрывающую, как в bef)
+			let end = '(?!'+scopes[0]+')'
+			let bef = '\\'+scopes[1][0]+'[^\\'+scopes[1][0]+']*?'
+			let arr = [beg, after, end]
+
+
+			while (1) {
+				arr.splice(1, 0, mid)
+				arrWithoutAfter = copyArr(arr)
+				arrWithoutAfter.splice(arrWithoutAfter.length-2, 1)
+
+
+				let listOfSegments = list(from, arr.join(''))
+
+
+				if (!list(from, arrWithoutAfter.join(''))) break
+				if (!listOfSegments) continue
+				/*
+				arr хранит данные: начало функции - сколько угодно любой из двух скобок - начало функции
+				splice каждый раз добавляет в середину любимую из двух скобок
+				*/
+
+
+				for (let i of listOfSegments) {
+					let elemWithoutAfter = i.match(arrWithoutAfter.join(''))[0]
+					//Так мы работаем с  результатами по большему регексу
+					//проверяя при этом меньший
+					//(ограничиваем результат по большему регексу меньшим регексом)
+					//таким образом это становится одно целое
+					//в обратную же сторону: единственный способ "увеличить"
+					//результат по меньшему регексу, который будет соответствовать большему
+					//регексу - записать скобки из меньшего, выцепить их и вставить в больший
+					//далее нам придется это делать. Но в данном случае проще так
+					if (v(elemWithoutAfter, scopes[1][0], scopes[1][1]) == 0) {
+						arrFun.push(i)
+					} else if (v(cutScopes(i, scopes[1][0], scopes[1][1]).reverse().join(''), scopes[1][1], scopes[1][0]) > 0)
+						negs.push(cutScopes(i, scopes[1][0], scopes[1][1]))
+					//в negs отправляется то, что имеет смысл искать с другой стороны
+
+
+				}
+			}
+
+			//alert(arrFun.length)
+			negs = negs.filter((e, i, a)=>a.map((x)=>x.join('')).indexOf(e.join('')) == i)
+			//тот же unicArr, только для массива массивов
+			//проще было бы прописать один универсальный алгоритм для сравнения
+			//но это долго и не факт, что это быстрее
+			negs = negs.map((e) => {
+				e = e.map((e2, j) => ((j == 0)? beg: mid).replace(new RegExp(ecraneSymbols('[\\'+scopes[1][0]+'\\'+scopes[1][1]+']'), 'g'), '\\'+e2))
+				e.push(after)
+				return e
+			});
+			//изменили regex с "любой" скобки на конкретную и добавили after
+
+			for (let i of negs) {
+				while (1) {
+					i.unshift(bef)
+
+					/*
+					СКРИПТ РАБОТАЕТ ДОЛГО ИЗ ЗА ЭТОГО
+					0)
+					единственный способ сделать хороший и быстрый поиск
+					это искать инвертированным регексом в инвертированном документе
+					это сложно реализовать. В будущем желательно
+					1)
+					постоянно делать unshift работает быстрее, когда n последовательных
+					регексов, чем если их записать в виде: (reg){n}
+					2)
+					let bef = '\\'+scopes[1][0]+'[^\\'+scopes[1][0]+']*?'
+					let pum = '('+bef+'){1}'
+					...
+					var q = listOfSegments2.filter(e => v(e, scopes[1][0], scopes[1][1]) == 0);
+					второй способ, учитывающий сразу начало
+					кажется быстрее, но по факту медленнее
+					поскольку в нашем случае опираясь лишь на
+					'{' - мы проверяем любой символ посередине
+					лишь на то, что он не скобка(просто и быстро),
+					а здесь его надо было бы проверять
+					аж на то, не идёт ли он до/после scopes[0]
+					*/
+
+
+					listOfSegments2 = list(from, i.join(''))
+					if (listOfSegments2.some((e) => (v(e, scopes[1][0], scopes[1][1]) == 0))) {
+						//если после добавления скобки в начало сумма скобок равна нулю...
+						let j = copyArr(i)
+						j.unshift(scopes[0])
+						addToBegin = list(from, j.join(''))
+						//...то добавляем функцию в начало
+						if (addToBegin) arrFun = arrFun.concat(addToBegin)
+						// и добавляем все получившееся
+					}
+					if (listOfSegments2.every((e) =>  v(e, scopes[1][0], scopes[1][1]) >= 0)) break
+					//когда все скобки становятся чрезмерными - работа закончена
+				}
+			}
+
+			return arrFun
+		}
+
+
+
+		let copyArr = (oldArr) => {
+			return Object.assign([], oldArr)}
+		const list = (from, r) => {
+
+			let expl = new RegExp(r, 'g')
+
+			/*	const start = new Date().getTime()
+			const ennd = new Date().getTime()
+			cou += 1
+			console. log(cou, (ennd-start)) */
+			return from.match(expl)
+
+		}
+		let cutScopes = (stringFun, scope1, scope2) => {
+			let reg = '(\\'+scope1+'|\\'+scope2+')'
+			let reg2 = new RegExp(reg, 'g')
+			let b = stringFun.match(reg2)
+			return b
+		}
+		let v = (stringFun, scope1, scope2) => {
+			let expl = new RegExp(('\\'+scope1 +'|'+ '\\'+scope2), 'g')
+			let n = stringFun.match(expl)
+			let k = 0
+			for (let i = 0; i < n.length; i++) {
+				n[i] == scope1? k++: k--
+				//console. log(k,n)
+				if ((k <= 0) && (i < (n.length-1)))	return -0.5
+			}
+			return k
+		}
+		let any = (scopes, excl = '') => {
+			return '([^\\'+(scopes+excl).split('').join('\\')+']|\\n)*[\\'+scopes.split('').join('\\')+']'
+		}
+		const unicArr = res => res.filter((i, n) => !res.includes(i, n + 1))
+		//разобрать это
+		let ecraneSymbols = (str) => {
+			return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+		}
+		//разобрать эту замену
+		//Когда много всяких скобочек в new regexp то нам удобнее экранировать их этой функцией
+		let subst = (from) => {
+
+			let patternForFunc = '(async|function|const|let|var)\\s*\\w*\\s*\\=*\\s*\\([^()]*\\)\\s*(=>)?\\s*'
+
+			let patternForReturn = 'return\\s*?\\w*?\\s*?'
+
+			listOfFunc = getSegments(from, [patternForFunc, ['{', '}']], valueOfAfter)
+
+			listOfFunc = unicArr(listOfFunc)
+
+			listOfFunc.reverse().forEach(curFunc => {
+				/*вот почему делаем reverse:
+			из getSegments приходит массив, где сначала внутренние функции
+			потом внешние (те, что их оборачивают)
+			если будет так, что сначала меняется внутренняя функция
+			потом меняется внешняя, то внешняя должна будет учитывать изменения
+			своей чести (т.е.изменения внутренней функции)
+			*/
+
+				newFunc = curFunc
+
+				returnesWithScopes = getSegments(curFunc, [patternForReturn, ['[', ']']], valueOfAfter).concat(getSegments(curFunc, [patternForReturn, ['(', ')']], valueOfAfter))
+				returnesWithScopes = unicArr(returnesWithScopes)
+				simpleReturnes = list(curFunc, patternForReturn + '(?=\n|$|}|;)')
+				//"безскобочный" ретурн, где закрывать его надо до одного из данных конечных элементов
+				//точку с запятой отнесли также к ним, но здесь не принципиально, если бы мы закрывали после нее
+				if (simpleReturnes) returnesWithScopes = returnesWithScopes.concat(unicArr(simpleReturnes))
+
+				returnesWithScopes.forEach(oldReturn => {
+					newReturn = oldReturn.replace(/(?=^)/, '{trace(Object.assign({}, this))\n')
+					newReturn = newReturn.replace(/(?<=$)/, '}')
+					newFunc = newFunc.replace(new RegExp(ecraneSymbols(oldReturn), 'g'), newReturn)
+				})
+
+				newFunc = newFunc.replace(/(?=.$)/, '\ntrace(Object.assign({}, this))\n')
+
+				from = from.replace(new RegExp(ecraneSymbols(curFunc), 'g'), newFunc)
+
+			})
+
+			from = from.replace(/(?<=^)/,
+				'\ntrace(Object.assign({}, this))\n')
+
+
+			return from
+		}
+		//вставляет дебаггер перед каждым выходом
+		//оборачивает дебаггер с выходом в фигурные скобки
+		//на всякий случай для того, чтобы не терялась целостность
+		//также вставляет дебаггер в самом конце на случай если выхода нет
+		function setText(innerText, deb) {
+
+			var dbg = document.createElement("script");
+			dbg.src = deb
+			//dbg.setAttribute("defer", "");
+			//dbg.async = false;
+			var pam = document.createElement("script");
+			//pam.setAttribute("async", "false");
+			pam.innerHTML = innerText;
+			//pam.type = 'text/javascript';
+			document.head.append(dbg);
+			//document.head.append(pam)
+			dbg.onload = () => {
+				document.head.append(pam)}
+			//подождали, пока прогрузится дебаггер
+
+
+		}
+
+
+
+
+
+		//	const start = new Date().getTime()
+
+		console.log(subst(insideScript[0]))
+
+		//	const end = new Date().getTime()
+		//	alert('time is: ' + (end - start) + ' ms');
+
+
+		//setTimeout(setText(subst(insideScript[0]), 'dbg.js'),		500);
+
+
+		/*
+		позже доработаю вариант с двумя видами кавычек в getSegments
+		в общем случае это будет полезно не только с return, но и с функциями
+		надо будет при подсчёте скобок не учитывать то, что экранировано
+		(чтобы кавычки были как аргументы скобок, это для return-ов,
+		хз как соотносится с функциями), а также то, что внутри кавычек
+		(это для функций, и для return-ов)
+		это сделает поиск вроде как совсем универсальной функцию
+		ну также решить вопрос с однострочными комментариями
+		после вставки вызовов функций вставляет также после закомментированного
+		*/
+
+
+	})
+
+
+
+
+</script>

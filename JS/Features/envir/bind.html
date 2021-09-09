@@ -1,0 +1,21 @@
+<script>
+  
+this.x = "external";
+var module = {
+  x: "inner",
+  getX: function() { return this.x; }
+};
+
+module.getX(); 
+// "inner"
+
+var getX = module.getX;
+getX(); 
+// "external", поскольку в этом случае this ссылается на глобальный объект
+
+
+// создаём новую функцию с this, привязанным к module
+var boundGetX = getX.bind(module);
+boundGetX(); // "inner" 
+  
+</script>

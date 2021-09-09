@@ -1,0 +1,27 @@
+<script>
+
+  
+function* gen1() {
+  console.log(0);
+  console.log(yield);
+}
+function* gen2(i) {
+  yield i;
+}
+var tog1 = gen1();
+tog1.next();             // 0
+tog1.next('qq');    // 1 qq
+
+function* gen3(i) {
+  yield* gen2(i);
+  yield i+1;
+  return "end";
+}
+var tog2 = gen3(10);
+console.log(tog2.next()); // 10
+console.log(tog2.next()); // 11
+console.log(tog2.next()); // 11
+
+
+
+</script>

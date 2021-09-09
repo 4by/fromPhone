@@ -1,0 +1,135 @@
+<body>
+  <canvas></canvas>
+</body>
+
+<style>
+  body {
+    margin: 0;
+    height: 100vh;
+    user-select: none;
+    -webkit-user-select: none;
+    position: fixed;
+  }
+</style>
+<script>
+
+  let ctx, p, W, H;
+
+  const Dist = (x1, y1, x2, y2) => Math.sqrt((x2-x1)**2+(y2-y1)**2);
+  //определяет расстояние между точками
+
+  const pick = (min, max) => Math.random() * (max - min) + min;
+  //выдает величину из диапазона [min; max]
+  let col = ["lime", "cyan", "white", "navy", "blue", "brown", "yellow"];
+
+  class Mover {
+    constructor(x, y, radius) {
+      this.x = x;
+      this.y = y;
+      this.radius = radius;
+      this.color = col[Math.floor(Math.random()*8)];
+      //выбирает случайный цвет
+      //почему то вначале было 6(не все цвета)
+      this.velocity = {
+        x: pick(-2, 2),
+        y: pick(-2, 2)
+      };
+
+
+
+      this.t = 0;
+
+    }
+
+    draw() {
+      this.t += Math.abs(this.velocity.x)+Math.abs(this.velocity.y);
+      //при каждом  вызове t(velocity) увеличивается
+      //величина, зависящая от скорости
+      var a = 1.1*Math.sin(this.t*0.01)
+      //а(t) меняет  угол крыла в зависимости от скорости
+      var dir = Math.atan2(this.velocity.y, this.velocity.x);
+      // dir(velocity.x, velocity.y)
+      // показывает угол крыла в зависимости от направления
+      // арктангенс это угол, зависящий от равнодействующей скорости
+      // (выводится математически)
+      var r = this.radius*2.5;
+      //длина крыла
+
+      ctx.beginPath();
+      ctx.fillStyle = this.color;
+      ctx.arc(this.x, this.y, this.radius, 0, 2*Math.PI);
+      //рисует  кружок (координаты, радиус, углы начала и конца)
+      ctx.fill();
+      //fill закрашивает (stroke бы оставило пустым)
+      ctx.closePath();
+
+
+      var angle = Math.PI/3+dir+a;
+      //angle(dir, a)
+      //оба крыла синхронизированы (это левое)
+      var dx=-r*Math.cos(angle);
+      var dy=-r*Math.sin(angle);
+      //чтобы крыло было на кружке
+
+      ctx.beginPath();
+      ctx.ellipse(this.x+dx, this.y+dy, r, this.radius, angle, 0.75*Math.PI, 0);
+      //крыло - x, y, radiusX, radiusY, rotation, startAngle, endAngle
+      ctx.fill();
+
+      angle = 5*Math.PI/3+dir-a;
+      //угол второго крыла
+      dx=-r*Math.cos(angle);
+      dy=-r*Math.sin(angle);
+
+      ctx.beginPath();
+      ctx.ellipse(this.x+dx, this.y+dy, r, this.radius, angle, 0, Math.PI*1.25);
+      ctx.fill();
+
+
+      this.x += this.velocity.x;
+      this.y += this.velocity.y;
+
+
+
+
+      if (this.x - this.radius <= 0 || this.x + this.radius >= W)
+        this.velocity.x = -this.velocity.x;
+      else if (this.y - this.radius <= 0 || this.y + this.radius >= H)
+        this.velocity.y = -this.velocity.y;
+    }
+  }
+
+
+  const init = () => {
+    ctx = document.querySelector("canvas").getContext("2d");
+    ctx.canvas.width = W = innerWidth;
+    ctx.canvas.height = H = innerHeight;
+    //создали холст
+    p = [];
+    for (let i = 0; i < 20; i++) {
+      let radius = pick(2, 8);
+      let x = pick(radius, W - radius);
+      let y = pick(radius, H - radius);
+      p.push(new Mover(x, y, radius));
+      //создали птичек с их местом и размером
+    }
+
+    requestAnimationFrame(animate);
+    //вызывает кадры из функции через определенный период
+    //в самой функции также должна быть эта ссылка на саму себя
+  }
+
+
+  const animate = () => {
+    ctx.fillStyle = "rgba(0, 191, 255, .1)";
+    //так как не было ctx.beginPath, то заполнило весь холст
+    ctx.fillRect(0, 0, W, H);
+    //рисует фон
+    p.forEach(pi => pi.draw());
+    //рисует всех птиц
+    requestAnimationFrame(animate);
+  }
+
+
+  window.addEventListener("load", init);
+</script>

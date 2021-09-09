@@ -1,0 +1,29 @@
+<script>
+
+
+let adr = 'path/script.js';
+
+let callback = (s) => console. log(s);
+
+
+function justFunc(src, cb) {
+  let script = document.createElement('script');
+  script.src = src;
+  script.onload? cb(script) : cb(new Error(`Ошибка загрузки скрипта ${src}`));
+}
+
+justFunc(adr, callback)
+
+function promisifyFun(src) {
+  let script = document.createElement('script');
+  script.src = src;
+  return new Promise((resolve, reject) => {
+    (script.onload)? resolve(script): reject(new Error(`Ошибка загрузки скрипта ${src}`))
+  })
+}
+
+promisifyFun(adr).then(console.log,console.log)
+
+
+
+</script>
