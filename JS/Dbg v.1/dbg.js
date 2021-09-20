@@ -1,179 +1,286 @@
+var meta = {
+    winObj: {},
+    excessProps: [],
+    scopeState: [],
+    openScopeState: [],
+  }
 
-var wspc={
-  count:9,
-  funNames:[],
-  state:[],
-  excessProps:[],
-  exodus:[]
-  //должно быть не больше этого числа
-} 
-function trace(copObj) {
 
-  function objDiff(pamA, pamB, ldif) {
+  function trace(copObj, opCl) {
 
-    let objA = Object.assign({}, pamA)
-    let objB = Object.assign({}, pamB)
 
-    function arrDiff(arrA, arrB) {
-      if (arrA.length == arrB.length) {
-        let i;
-        for (i = 0; i < (arrA.length); i++) {
-          if (arrA[i] == arrB[i]) continue
-          else if (Array.isArray(arrA[i]) && Array.isArray(arrB[i])) {
-            let a = arrA[0]
-            if (arrDiff(arrA[i], arrB[i])) continue
-            else return false
-          } else return false
+    function fixObjs(obj) {
+      for (let i in obj) {
+        if (typeof obj[i] == 'object') obj[i] = Object.assign({}, obj[i])
+      }
+    }
+    function purge(obj) {
+      for (let i in obj) {
+        if ((meta.excessProps.includes(i)) || (obj[i] === undefined)) delete obj[i]
+      }
+      return obj
+    }
+    function excess(obj) {
+
+
+      for (let i in obj) {
+        if (obj[i] !== undefined) meta.excessProps.push(i)
+      }
+
+
+    }
+    function getName() {
+      let a = new Error().stack;
+
+
+
+      // let b = /(?<=at\s)(?!(getName|trace)).*?(?=\s)/g
+      let b = /(?<=at\s)(?!(getName|trace)).*/g
+
+      let funStack = []
+      if ((a.match(b) || []).length != 0) {
+        for (let i = 0; i < a.match(b).length; i++) {
+          funStack[i] = a.match(b)[i].replace(/http.*.html:/, '')
+
         }
-        if (i == (arrA.length)) return true
+      }
+      return funStack
+    }
+    function objDiff(pamA, pamB) {
+
+
+      let ldif = [undefined,
+        undefined]
+      let objA = Object.assign({}, pamA)
+      let objB = Object.assign({}, pamB)
+
+
+      const twoObj = (one, two, here) => {
+
+        let newL = objDiff(one[here], two[here])
+
+        if (newL[0] && len(newL[0]))
+          ldif[0] = Object.assign({[here]: newL[0]}, ldif[0])
+        else
+          ldif[0] = undefined
+
+
+        if (newL[1] && len(newL[1]))
+          ldif[1] = Object.assign({[here]: newL[1]}, ldif[1])
+        else
+          ldif[1] = undefined
+        //	console.log(Object.assign({},ldif[1]))
+      }
+
+      const makeProps = (arg) => {
+
+        if (arg.remProp)
+          ldif[0] = Object.assign({[arg.toProp]: arg.remProp
+        }, ldif[0])
+        if (arg.addProp)
+          ldif[1] = Object.assign({[arg.toProp]: arg.addProp
+        }, ldif[1])
+
+
+        //чтобы было видно последнее свойство обьекта
+      }
+
+
+      function arrDiff(arrA, arrB) {
+        if (arrA.length == arrB.length) {
+          let i;
+          for (i = 0; i < (arrA.length); i++) {
+            if (arrA[i] == arrB[i]) continue
+            else if (Array.isArray(arrA[i]) && Array.isArray(arrB[i])) {
+              let a = arrA[0]
+              if (arrDiff(arrA[i], arrB[i])) continue
+              else return false
+            } else return false
+          }
+          if (i == (arrA.length)) return true
+          else return false
+        } else return false
+      }
+      const objNotArr = (obj) => {
+        if ((typeof obj == 'object') && (!Array.isArray(obj))) return true
         else return false
-      } 
-      else return false
-    }
-    const writeDiff = (one, two, here) => {
-
-      if (objDiff(one, two, {}) != undefined) {
-
-        if (here) {
-          if (ldif[here] == undefined) ldif[here] = {}
-          ldif[here] = objDiff(one, two, ldif[here])
-        } else {
-          if (ldif == undefined) ldif = {}
-          ldif = objDiff(one, two, ldif)
-        }
       }
-    }
-    const objNotArr = (obj) => {
-      if ((typeof obj == 'object') && (!Array.isArray(obj))) return true
-      else return false
-    }
-    const change = (arg) => {
-      if (arg.toVal) {
-        if (!ldif[arg.toVal]) ldif[arg.toVal] = {}
-        if (arg.remVal) ldif[arg.toVal].removed = arg.remVal
-        if (arg.addVal) ldif[arg.toVal].added = arg.addVal
-      } else if (arg.toProp) {
-        if (arg.remProp) {
-          if (!ldif.removedProps) ldif.removedProps = {}
-          ldif.removedProps[arg.toProp] = arg.remProp
-        }
-        if (arg.addProp) {
-          if (!ldif.addedProps) ldif.addedProps = {}
-          ldif.addedProps[arg.toProp] = arg.addProp
-        }
-      }
-    }
-    const len = (obj) => Object.keys(obj).length;
-   
-    if (!objNotArr(objA) || !objNotArr(objB)) {
-      throw new SyntaxError("Данные разных типов: введенные аргументы не сопоставимы");
-    } else {
-         for (let i in objA) {
+      const len = (obj) => Object.keys(obj).length;
+
+      if (!objNotArr(objA) || !objNotArr(objB)) {
+        throw new SyntaxError("Данные разных типов: введенные аргументы не сопоставимы");
+      } else {
+        for (let i in objA) {
           for (let j in objB) {
             if (i == j) {
-           if (objA[i] != objB[i]) {
-          //ничего не делаем с равными значениями
-          if (objNotArr(objA[i]) && objNotArr(objB[i]))  writeDiff(objA[i], objB[i], i)
-          //два обьекта немассива
-          else if ((!((Array.isArray(objA[i])) && (Array.isArray(objB[i])))) || (!(arrDiff(objA[i], objB[i])))) {             
-            change({
-            remVal: objA[i], addVal: objB[i], toVal: i})
-         }
-          //два массива которые неравны и все остальное
-        }
+              if (objA[i] != objB[i]) {
+                //ничего не делаем с равными значениями
+                if (objNotArr(objA[i]) && objNotArr(objB[i]))
+                  twoObj(objA, objB, i)
+                //два обьекта немассива
+                else if ((!((Array.isArray(objA[i])) && (Array.isArray(objB[i])))) || (!(arrDiff(objA[i], objB[i])))) {
+                  makeProps({
+                    remProp: objA[i], addProp: objB[i], toProp: i
+                  })
+                }
+                //два массива которые неравны и все остальное
+
+              }
               delete objA[i]; delete objB[j];
               break
             }
           }
         }
         if (len(objA) > 0) {
-          for (let i in objA) change({
+          for (let i in objA) makeProps({
             toProp: i, remProp: objA[i]})
         }
         if (len(objB) > 0) {
-          for (let j in objB)  change({
-            toProp: j, addProp: objB[j]})
+          for (let j in objB) {
+            makeProps({
+              toProp: j, addProp: objB[j]})
+          }
         }
-      if (len(ldif) > 0)  return ldif
+        if (len(ldif) > 0)
+          return ldif
+      }
+    }
+    function toLastInArr(arr, pos, map) {
+
+      let plus = Object.keys(arr).length
+
+      if (pos == 0) {
+        for (let i = 0; i < map.length; i++)  map[i][0] = plus+i+" : "+map[i][0]
+        arr = Object.assign(arr, Object.fromEntries(map))
+      } else {
+        let lastKey = Object.keys(arr)[plus-1]
+        toLastInArr(arr[lastKey], pos-1, map)
+      }
+
+      return arr
+    }
+
+
+    let funPath = getName()
+
+
+    if (opCl) {
+      let obj = purge(copObj)
+      fixObjs(obj)
+
+      let lastDiff = objDiff(meta.scopeState.pop(), obj)
+      meta.scopeState.push(obj);
+
+
+      let scMap = []
+      let depth
+      if (lastDiff.some(e => e)) scMap.push(["|localChanges|", lastDiff])
+
+
+
+
+      if (opCl == '{') {
+
+        depth = funPath.length-2
+        meta.openScopeState.push(obj);
+        scMap.push([funPath[0], {}])
+
+      } else {
+
+        depth = funPath.length-1
+        let globDiff = objDiff(meta.openScopeState.pop(), obj)
+        if (globDiff.some(e => e)) scMap.push(["|globalChanges|", globDiff])
+      }
+
+      toLastInArr(meta.winObj, depth, scMap)
+    } else excess(copObj)
+
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+  trace(Object.assign({}, this));
+
+
+
+
+  var demo = {
+    a: 1,
+    b: {
+      c: 2
     }
   }
-  function fixObjs(obj) {
-  for (let i in obj) {
-    if (typeof obj[i] == 'object') obj[i]=Object.assign({}, obj[i])       
-  }  
-  }
-  function changes() {
- if (!wspc.chanState) wspc.chanState=[]
- while ((wspc.chanState.length)<(wspc.state.length-1)) {
-  wspc.chanState.push(objDiff(wspc.state[wspc.chanState.length], wspc.state[wspc.chanState.length+1], {}))        
- 
-}
- }
-   function purge(obj) {
-    for (let i in obj) {
-  if ((wspc.excessProps.includes(i)) || (obj[i]===undefined)) delete obj[i]
-}
-return obj
-}
-  function excess(obj) {
-    
-    
-    for (let i in obj) {
-    if (obj[i]!==undefined) wspc.excessProps.push(i)
-    }
-  
 
+  function e() {
+    trace(Object.assign({}, this), '{');
+    trace(Object.assign({}, this), '}');
   }
- 
-  function nameStack() {
-  let a = new Error().stack;
- 
- 
- 
- // let b = /(?<=at\s)(?!(nameStack|trace)).*?(?=\s)/g            
-  let b = /(?<=at\s)(?!(nameStack|trace)).*/g            
- 
- 
-let funStack = []
-if ((a.match(b) || []).length != 0) {
-for (let i = 0; i<a.match(b).length; i++) {
- funStack[i]= a.match(b)[i].replace(/http.*.html:/, '')
-  
-}
-}
-if (funStack.length != 0) wspc.funNames.push(funStack)  
+  function d() {
+    trace(Object.assign({}, this), '{');
+    demo.b = 23;
+    trace(Object.assign({}, this), '}');
+  }
+  const c = ()=> {
+    trace(Object.assign({}, this), '{');
+    demo.b = 22; d();
 
-}
- 
-  function exodus() {
-    wspc.funNames.splice(0,1)
-  for (let i=0; i<wspc.funNames.length; i++) {
-    
-    wspc.exodus[i+': '+wspc.funNames[i][0]] =[]; 
-    if (wspc.chanState[i]) wspc.exodus[i+': '+wspc.funNames[i][0]]['changes'] = wspc.chanState[i];
-    wspc.exodus[i+': '+wspc.funNames[i][0]]['funPath('+wspc.funNames[i].length+')'] = wspc.funNames[i];
-     
+    trace(Object.assign({}, this), '}');
   }
-  }
+  const a = () => {
+    trace(Object.assign({}, this), '{');
+    (function b() {
+      trace(Object.assign({}, this), '{');
+      demo.b = 21
+      c();
 
-  
-  
-  if (wspc.count !== undefined) {
-   nameStack();
-  if (wspc.excessProps.length==0) excess(copObj)
-  let obj = (purge(copObj))
-  fixObjs(obj)
-  wspc.state.push(obj)
-  changes()
-  --(wspc.count)
-  if (wspc.count == 0) {
-  delete wspc['count']
-  exodus();
-  console.log(wspc)
+      trace(Object.assign({}, this), '}');
+    })();
+    demo.b = 20;
+    //	alert(demo.qq)
+    c();
+    trace(Object.assign({}, this), '}');
   }
-  }
-  
+  a();
+  (function () {
+    trace(Object.assign({}, this), '{');
+    a(); meta
+    trace(Object.assign({}, this), '}');
+  })();
+  var s = 5;
+  (async () => {
+    trace(Object.assign({}, this), '{');
+    let result = (await new Promise((resolve, reject) => {
+      resolve("got")}))
 
-  
-}
+    trace(Object.assign({}, this), '}');
+  })();
+
+
+
+
+
+
+
+  trace(Object.assign({}, this), '}');
+
+  console.log(meta)
+
+
+
+
+
+
+
+
+
+
 

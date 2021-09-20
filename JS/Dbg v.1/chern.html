@@ -21,115 +21,113 @@
 			Добавили в конец его, чтобы было удобно задавать значение по умолчанию
 			*/
 			let arrFun = []
-			let negs = []
-			let beg = scopes[0]+'\\'+scopes[1][0]
-			let mid = '([^\\'+scopes[1][0]+'\\'+scopes[1][1]+']*(?<!'+scopes[0]+')[\\'+scopes[1][0]+'\\'+scopes[1][1]+'])'
-			//ищет скобку, которая следует не после объявления функции
-			//Так мы избегаем вложенных функций
-			//(возможно тут удобнее сразу закрывающую, как в bef)
-			let end = '(?!'+scopes[0]+')'
-			let bef = '\\'+scopes[1][0]+'[^\\'+scopes[1][0]+']*?'
-			let arr = [beg,mid,'{',0,'}',end]
-
-
-			while (1) {
-				arr[3]++
-				arr = copyArr(arr)
-
-				let listOfSegments = list(from, arr.join(''))
-  
-  			if (!listOfSegments) break
-
-				for (let i of listOfSegments) {
-					if (v(i, scopes[1][0], scopes[1][1]) == 0) {
-						arrFun.push(i)
-					} 
-					else if (v(cutScopes(i, scopes[1][0], scopes[1][1]).reverse().join(''), scopes[1][1], scopes[1][0]) > 0)
-				
-				negs.push(cutScopes(i, scopes[1][0], scopes[1][1]))
-					//в negs отправляется то, что имеет смысл искать с другой стороны
-
-
-				}
-			}
-
-
-
-
-
-
-    
-    
-    
-    
-    //console.log(copyArr(negs),copyArr(negs).length)
-    
-			//console.log(arrFun.length)
-			negs = negs.filter((e, i, a)=>a.map((x)=>x.join('')).indexOf(e.join('')) == i)
-			//тот же unicArr, только для массива массивов
-			//проще было бы прописать один универсальный алгоритм для сравнения
-			//но это долго и не факт, что это быстрее
-			negs = negs.map((e) => {
-				e = e.map((e2, j) => ((j == 0)? beg: mid).replace(new RegExp(ecraneSymbols('[\\'+scopes[1][0]+'\\'+scopes[1][1]+']'), 'g'), '\\'+e2))
-				return e
-			});
-			//изменили regex с "любой" скобки на конкретную и добавили after
 		
+		
+		
+		
+			let beg = scopes[0]+'\\'+scopes[1][0]
+		  let end = '\\'+scopes[1][1]
+    
+    
+    
+      let any = '(?:.||\\s)*?'
+      let toMid = [any,'(',beg, any, end,')',any]
+  
+      
+      let arr = toMid.slice(2,5)
+
+     arr.splice((arr.length-1)/2,1,...toMid)
+     arr.splice((arr.length-1)/2,1,...toMid)
+     arr.splice((arr.length-1)/2,1,...toMid)
+     arr.splice((arr.length-1)/2,1,...toMid)
+     
+     
+     
+     	
+     
+     
+		 
+     
+     
+     
+     
+    
+      
+  
+  	
+      let listOfSegments = listIn(from, arr.join(''))
+    
+    
+
+		  
+    
+    
+    
+    
+    
+      
+    
+
+	 
+     
 			
-			for (let i of negs) {
-				while (1) {
-					i.unshift(bef)
+  
+		
+		
+	
+			
 
-					/*
-					СКРИПТ РАБОТАЕТ ДОЛГО ИЗ ЗА ЭТОГО
-					0)
-					единственный способ сделать хороший и быстрый поиск
-					это искать инвертированным регексом в инвертированном документе
-					это сложно реализовать. В будущем желательно
-					1)
-					постоянно делать unshift работает быстрее, когда n последовательных
-					регексов, чем если их записать в виде: (reg){n}
-					2)
-					let bef = '\\'+scopes[1][0]+'[^\\'+scopes[1][0]+']*?'
-					let pum = '('+bef+'){1}'
-					...
-					var q = listOfSegments2.filter(e => v(e, scopes[1][0], scopes[1][1]) == 0);
-					второй способ, учитывающий сразу начало
-					кажется быстрее, но по факту медленнее
-					поскольку в нашем случае опираясь лишь на
-					'{' - мы проверяем любой символ посередине
-					лишь на то, что он не скобка(просто и быстро),
-					а здесь его надо было бы проверять
-					аж на то, не идёт ли он до/после scopes[0]
-					*/
+    
+  		
+  		
+  		
+      
+   
+    
+  		
 
+		
+		
 
-					listOfSegments2 = list(from, i.join(''))
-					if (listOfSegments2.some((e) => (v(e, scopes[1][0], scopes[1][1]) == 0))) {
-						//если после добавления скобки в начало сумма скобок равна нулю...
-						let j = copyArr(i)
-						j.unshift(scopes[0])
-						addToBegin = list(from, j.join(''))
-						//...то добавляем функцию в начало
-						if (addToBegin) arrFun = arrFun.concat(addToBegin)
-						// и добавляем все получившееся
-					}
-					if (listOfSegments2.every((e) =>  v(e, scopes[1][0], scopes[1][1]) >= 0)) break
-					//когда все скобки становятся чрезмерными - работа закончена
-				}
-			}
+console.log(res.length, unicArr(res).length)
       
-      
-      
-      
-      
-      
-    //console.log(unicArr(arrFun).length)
+
+   // console.log(unicArr(arrFun).length)
 			return arrFun
 		}
+		
 
 
+			
+			
+			
+			
+			
 
+	const listIn = (from, r) => {
+
+			let expl = new RegExp(r, 'g')
+      let a = from.matchAll(expl)
+      
+      if (a) {
+      a = Array.from(a)
+      
+      a = a.map((e)=>{return Array.from(e)})    
+    
+    
+      console. log(a)
+      //console. log(a.map((e)=>{return v(e[0], '{', '}')}))
+    
+      a = a.flat()  
+      
+      a = a.filter((e)=>{return e})    
+      
+      }
+      return a
+		}
+		
+		
+		
 		let copyArr = (oldArr) => {
 			return Object.assign([], oldArr)}
 		const list = (from, r) => {
@@ -168,7 +166,13 @@
 		//Когда много всяких скобочек в new regexp то нам удобнее экранировать их этой функцией
 		let subst = (from) => {
 
-			let patternForFunc = '(async|function|const|let|var)\\s*\\w*\\s*\\=*\\s*\\([^()]*\\)\\s*(=>)?\\s*'
+			let patternForFunc = '(?:async|function|const|let|var)\\s*\\w*\\s*\\=*\\s*\\([^()]*\\)\\s*(?:=>)?\\s*'
+		
+		
+		 
+
+
+
 
 			let patternForReturn = 'return\\s*?\\w*?\\s*?'
 
@@ -239,7 +243,8 @@
 
 
 		
-		console.log(subst(insideScript[0]))
+		subst(insideScript[0])
+		//console.log(subst(insideScript[0]))
 
 
 		//setTimeout(setText(subst(insideScript[0]), 'dbg.js'),		500);

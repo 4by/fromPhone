@@ -1,17 +1,13 @@
 <script>
 
-
-
-  var wspc = {
-    forTest: [[],
-      [0]],
-    openScope: [],
-    scopeState: [],
-    innerFunState: [],
+  var meta = {
+    winObj: {},
     excessProps: [],
-    exodus: [],
-    //должно быть не больше этого числа
+    scopeState: [],
+    openScopeState: [],
   }
+
+
   function trace(copObj, opCl) {
 
 
@@ -20,15 +16,9 @@
         if (typeof obj[i] == 'object') obj[i] = Object.assign({}, obj[i])
       }
     }
-    /*	function changes() {
-			while ((wspc.chanState.length) < (wspc.state.length-1)) {
-				wspc.chanState.push(objDiff(wspc.state[wspc.chanState.length], wspc.state[wspc.chanState.length+1]))
-
-			}
-		} */
     function purge(obj) {
       for (let i in obj) {
-        if ((wspc.excessProps.includes(i)) || (obj[i] === undefined)) delete obj[i]
+        if ((meta.excessProps.includes(i)) || (obj[i] === undefined)) delete obj[i]
       }
       return obj
     }
@@ -36,7 +26,7 @@
 
 
       for (let i in obj) {
-        if (obj[i] !== undefined) wspc.excessProps.push(i)
+        if (obj[i] !== undefined) meta.excessProps.push(i)
       }
 
 
@@ -48,7 +38,6 @@
 
       // let b = /(?<=at\s)(?!(getName|trace)).*?(?=\s)/g
       let b = /(?<=at\s)(?!(getName|trace)).*/g
-
 
       let funStack = []
       if ((a.match(b) || []).length != 0) {
@@ -158,89 +147,60 @@
           return ldif
       }
     }
+    function toLastInArr(arr, pos, map) {
 
+      let plus = Object.keys(arr).length
 
-    let toLastInArr = (arr, pos, elem) => {
-      arr = Object.assign([], arr)
-      pos == 0? arr.push(elem): arr[arr.length-1] = toLastInArr(arr[arr.length-1], pos-1, elem)
-      /*если последний элемент - не массив, то он его заменяет
-если массив, то пушит
-возможно надо будет пофиксить*/
+      if (pos == 0) {
+        for (let i = 0; i < map.length; i++)  map[i][0] = plus+i+" : "+map[i][0]
+        arr = Object.assign(arr, Object.fromEntries(map))
+      } else {
+        let lastKey = Object.keys(arr)[plus-1]
+        toLastInArr(arr[lastKey], pos-1, map)
+      }
+
       return arr
     }
 
 
-
-
-
-
-
-
-
-
-    
-    
-    
-    
-
-    if (wspc.excessProps.length == 0) excess(copObj)
-    let obj = (purge(copObj))
-    fixObjs(obj)
-
-    if (wspc.scopeState.length > 1) {
-      let lastDiff = objDiff(wspc.scopeState.pop(), obj)
-      if (!lastDiff.every(e => !e)) wspc.openScope[wspc.openScope.length-1].push(lastDiff)
-    }
-    wspc.scopeState.push(obj);
-
     let funPath = getName()
 
-    if (opCl == '{') {
-      wspc.openScope.push([])
+
+    if (opCl) {
+      let obj = purge(copObj)
+      fixObjs(obj)
+
+      let lastDiff = objDiff(meta.scopeState.pop(), obj)
+      meta.scopeState.push(obj);
 
 
-
-      wspc.forTest[0] = toLastInArr(wspc.forTest[0], wspc.forTest[1]++, [funPath[0]])
-//в самый глубокий массив (массив, глубина, что)
-
-
-
-
-
-
-    } else if (opCl == '}') {
-
-      let lastChange = wspc.openScope.pop()
-
-      wspc.innerFunState.push(lastChange)
-
-
-      let i = wspc.innerFunState.length-1
-      wspc.exodus[i+': '+funPath[0]] = [];
-      if (wspc.innerFunState[i]) wspc.exodus[i+': '+funPath[0]]['changes'] = wspc.innerFunState[i]
+      let scMap = []
+      let depth
+      if (lastDiff.some(e => e)) scMap.push(["|localChanges|", lastDiff])
 
 
 
 
-      wspc.forTest[1]--
-      /*
-			wspc.forTest[0] = toLastInArr(wspc.forTest[0], wspc.forTest[1]--, lastChange)
-				сделаем читабельный вид (массп. объект или объект)
-				(по рисунку)
-			*/
-    }
+      if (opCl == '{') {
 
+        depth = funPath.length-2
+        meta.openScopeState.push(obj);
+        scMap.push([funPath[0], {}])
 
+      } else {
 
+        depth = funPath.length-1
+        let globDiff = objDiff(meta.openScopeState.pop(), obj)
+        if (globDiff.some(e => e)) scMap.push(["|globalChanges|", globDiff])
+      }
 
-
-
+      toLastInArr(meta.winObj, depth, scMap)
+    } else excess(copObj)
 
   }
 
 
 
-  trace(Object.assign({}, this))
 
 
 
@@ -250,66 +210,8 @@
 
 
 
-  /*
+  trace(Object.assign({}, this));
 
-	var demo = {
-		a: 1,
-		b: {
-			c: 2
-		}
-	}
-
-	function e() {
-		trace(Object.assign({}, this), '{');
-		trace(Object.assign({}, this), '}');
-	}
-	function d() {
-		trace(Object.assign({}, this), '{');
-		demo.b = 23;
-
-		trace(Object.assign({}, this), '}');
-	}
-	const c = ()=> {
-		trace(Object.assign({}, this), '{');
-	//	demo.b = 22;
-		demo.b = 24;
-		d();
-
-		trace(Object.assign({}, this), '}');
-	}
-	const a = () => {
-		trace(Object.assign({}, this), '{');
-		demo.b = 20;
-		(function b() {
-			trace(Object.assign({}, this), '{');
-			demo.b = 21
-			c();
-
-			trace(Object.assign({}, this), '}');
-		})();
-		//	alert(demo.qq)
-  //		e();
-		c();
-	//	d();
-		demo.b = 24;
-
-		trace(Object.assign({}, this), '}');
-	}
-	a();
-
-	(function () {
-		trace(Object.assign({}, this), '{');
-		trace(Object.assign({}, this), '}');
-	})();
-
-	(async () => {
-		trace(Object.assign({}, this), '{');
-		let result = (await new Promise((resolve, reject) => {
-			resolve("got")}))
-
-		trace(Object.assign({}, this), '}');
-	})();
-*/
 
 
 
@@ -327,7 +229,6 @@
   function d() {
     trace(Object.assign({}, this), '{');
     demo.b = 23;
-
     trace(Object.assign({}, this), '}');
   }
   const c = ()=> {
@@ -338,7 +239,6 @@
   }
   const a = () => {
     trace(Object.assign({}, this), '{');
-    demo.b = 20;
     (function b() {
       trace(Object.assign({}, this), '{');
       demo.b = 21
@@ -346,18 +246,18 @@
 
       trace(Object.assign({}, this), '}');
     })();
+    demo.b = 20;
     //	alert(demo.qq)
     c();
-
     trace(Object.assign({}, this), '}');
   }
   a();
-
   (function () {
     trace(Object.assign({}, this), '{');
+    a(); meta
     trace(Object.assign({}, this), '}');
   })();
-
+  var s = 5;
   (async () => {
     trace(Object.assign({}, this), '{');
     let result = (await new Promise((resolve, reject) => {
@@ -369,7 +269,22 @@
 
 
 
-  console.log(wspc)
+
+
+
+  trace(Object.assign({}, this), '}');
+
+  console.log(meta)
+
+
+
+
+
+
+
+
+
+
 
 
 </script>
