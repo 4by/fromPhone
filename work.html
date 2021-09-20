@@ -12,7 +12,7 @@
   .then(insideScript => {
 
 
-
+     //console.log(insideScript[0])
 
 
     const listIn = (from, r) => {
@@ -20,63 +20,46 @@
       let expl = new RegExp(r, 'g')
       let a = from.matchAll(expl)
       if (a) {
-        a = Array.from(a)
-
-        a = a.map((e)=> {
-          return Array.from(e)})
-
-        console. log(a)
-
-        //console. log(a.map((e)=>{return v(e[0], '{', '}')}))
-
-        a = a.flat()
-
-        a = a.filter((e)=> {
-          return e
-        })
-
+        a = Array.from(a)[0].groups
+        a = Object.entries(a)
+        a = a.filter((e)=>{return /^result/.test(e[0])})
+        a = a.map((e)=>{return e[1]})
+        console.log(a)
       }
       return a
     }
     const maxBefore = (bef, grName) => {
       return '(?=(?<'+grName+'>'+bef+'*))\\k<'+grName+'>'
     }
-
-
-    //let patternForFunc = '(?:async|function|const|let|var)\\s*\\w*\\s*\\=?\\s*\\([^()]*\\)\\s*(?:=>)?\\s*'
-   
- 
-  
-    
-    
-    
-   
-
    
     let beg = (grNum) => { return '(?:async|function|const|let|var)' + maxBefore('\\s','fn1'+grNum) + maxBefore('\\w','fn2'+grNum) + maxBefore('\\s','fn3'+grNum) + '\\=?'+maxBefore('\\s','fn4'+grNum)+'\\('+maxBefore('[^()]','fn5'+grNum)+'\\)'+maxBefore('\\s','fn6'+grNum)+'(?:=>)?'+maxBefore('\\s','fn7'+grNum) +'\\{'  }                  
     let end = '\\}'
     let any = '(?:.||\\s)'
-    let bb = (grNum) => { return '(?:'+any+'(?!'+beg(grNum)+'))' }
+    //двойной ? это 0 или 1 - это делает символ необязательным
+    let bb = (grNum) => { return '(?:'+any+'(?!'+beg(grNum+'1')+'))' }
     let be = '(?:'+any+'(?!'+end+'))'
+    let arr = []
     
-    let arr = [beg('first'),end]
-    arr.splice(1,0, maxBefore(be,'be'+arr.length), any)
-    
-    for (let i=0; i<5; i++) {
-    arr.splice(0,0, beg('beg'+arr.length), maxBefore(bb('bb'+arr.length),'mbb'+arr.length), any, '(')
-    arr.splice(arr.length,0, ')',maxBefore(be,'be'+arr.length), any, end)
+    let insertIn = (arr, num) => {
+    for (let i=0; i<num; i++) {
+    arr.splice(0,0, '(?<result'+arr.length+'>', beg('beg'+arr.length),'(?:',maxBefore(bb('bb'+arr.length),'mbb'+arr.length), any,')??')
+    arr.splice(arr.length,0,'(?:',maxBefore(be,'be'+arr.length) , any,')??', end, ')')
+    }
     }
     
- 
-   
-    console.log(arr)
     
-    listIn(insideScript[0], arr.join(''))
-   
-   
-   
+   insertIn(arr,4)
+    
+    
+    
+    
 
-
+   listIn(insideScript[0], arr.join(''))
+   
+   
+   
+ 
+    
 
   })
 
