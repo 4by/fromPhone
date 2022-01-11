@@ -13,7 +13,11 @@
 
     function fixObjs(obj) {
       for (let i in obj) {
-        if (typeof obj[i] == 'object') obj[i] = Object.assign({}, obj[i])
+        if (typeof obj[i] == 'object')
+        //obj[i] = Object.assign({}, obj[i])
+        obj[i] = {...obj[i]};
+        
+        
       }
     }
     function purge(obj) {
@@ -53,8 +57,11 @@
 
       let ldif = [undefined,
         undefined]
-      let objA = Object.assign({}, pamA)
-      let objB = Object.assign({}, pamB)
+     // let objA = Object.assign({}, pamA)
+    //  let objB = Object.assign({}, pamB)
+    let objA = {...pamA};
+    let objB = {...pamB};
+    
 
 
       const twoObj = (one, two, here) => {
@@ -62,13 +69,16 @@
         let newL = objDiff(one[here], two[here])
 
         if (newL[0] && len(newL[0]))
-          ldif[0] = Object.assign({[here]: newL[0]}, ldif[0])
+        // ldif[0] = Object.assign({[here]: newL[0]}, ldif[0])
+        ldif[0] = {...{[here]: newL[0]}, ...ldif[0]};
         else
           ldif[0] = undefined
 
 
         if (newL[1] && len(newL[1]))
-          ldif[1] = Object.assign({[here]: newL[1]}, ldif[1])
+        //  ldif[1] = Object.assign({[here]: newL[1]}, ldif[1])
+         ldif[1] = {...{[here]: newL[1]}, ...ldif[1]};
+       
         else
           ldif[1] = undefined
         //	console.log(Object.assign({},ldif[1]))
@@ -77,11 +87,14 @@
       const makeProps = (arg) => {
 
         if (arg.remProp)
-          ldif[0] = Object.assign({[arg.toProp]: arg.remProp
-        }, ldif[0])
+        //  ldif[0] = Object.assign({[arg.toProp]: arg.remProp  }, ldif[0])
+        ldif[0] = {...{[arg.toProp]: arg.remProp}, ...ldif[0]};
+       
+        
         if (arg.addProp)
-          ldif[1] = Object.assign({[arg.toProp]: arg.addProp
-        }, ldif[1])
+         // ldif[1] = Object.assign({[arg.toProp]: arg.addProp }, ldif[1])
+        ldif[1] = {...{[arg.toProp]: arg.addProp}, ...ldif[1]};
+       
 
 
         //чтобы было видно последнее свойство обьекта
@@ -153,7 +166,11 @@
 
       if (pos == 0) {
         for (let i = 0; i < map.length; i++)  map[i][0] = plus+i+" : "+map[i][0]
-        arr = Object.assign(arr, Object.fromEntries(map))
+     
+     
+       Object.assign(arr, Object.fromEntries(map))
+     //arr = {...arr, ...Object.fromEntries(map)};
+   
       } else {
         let lastKey = Object.keys(arr)[plus-1]
         toLastInArr(arr[lastKey], pos-1, map)
@@ -201,6 +218,7 @@
 
 
 
+  trace({...this});
 
 
 
@@ -208,9 +226,6 @@
 
 
 
-
-
-  trace(Object.assign({}, this));
 
 
 
@@ -223,47 +238,48 @@
   }
 
   function e() {
-    trace(Object.assign({}, this), '{');
-    trace(Object.assign({}, this), '}');
+    
+    trace({...this}, '{');
+    trace({...this}, '}');
   }
   function d() {
-    trace(Object.assign({}, this), '{');
+    trace({...this}, '{');
     demo.b = 23;
-    trace(Object.assign({}, this), '}');
+    trace({...this}, '}');
   }
   const c = ()=> {
-    trace(Object.assign({}, this), '{');
+    trace({...this}, '{');
     demo.b = 22; d();
 
-    trace(Object.assign({}, this), '}');
+    trace({...this}, '}');
   }
   const a = () => {
-    trace(Object.assign({}, this), '{');
+    trace({...this}, '{');
     (function b() {
-      trace(Object.assign({}, this), '{');
+      trace({...this}, '{');
       demo.b = 21
       c();
 
-      trace(Object.assign({}, this), '}');
+      trace({...this}, '}');
     })();
     demo.b = 20;
     //	alert(demo.qq)
     c();
-    trace(Object.assign({}, this), '}');
+    trace({...this}, '}');
   }
   a();
   (function () {
-    trace(Object.assign({}, this), '{');
+    trace({...this}, '{');
     a(); meta
-    trace(Object.assign({}, this), '}');
+    trace({...this}, '}');
   })();
   var s = 5;
   (async () => {
-    trace(Object.assign({}, this), '{');
+    trace({...this}, '{');
     let result = (await new Promise((resolve, reject) => {
       resolve("got")}))
 
-    trace(Object.assign({}, this), '}');
+    trace({...this}, '}');
   })();
 
 
@@ -272,7 +288,7 @@
 
 
 
-  trace(Object.assign({}, this), '}');
+  
 
   console.log(meta)
 

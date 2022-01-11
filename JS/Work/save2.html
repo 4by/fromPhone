@@ -1,0 +1,79 @@
+<script>
+
+
+  fetch('text2')
+  .then(response => response.text())
+  .then(fullText => {
+    let reg = /(?<=\<script\>)(\n|.)*(?=\<\/script\>)/g
+    return fullText.match(reg)
+    //return (fullText)
+  }
+  )
+  .then(insideScript => {
+
+    const list = (from, r) => {
+      let expl = new RegExp(r, 'g')
+      let a = from.match(expl)
+
+
+      return a
+
+    }
+
+    const maxBez = (grName, ...bez) => {
+    
+    
+
+      
+
+      bez = bez.map((e)=> {
+        return '(?!'+e+')'
+      })
+    
+    
+    
+    
+    
+    
+    
+    
+    let any = '(?:.||\\s)'
+    
+    console.log(bez)
+    
+   //   bez = ['(',any, ...bez,')'].join('')
+   //   max = '(?:(?=(?<'+grName+'>'+bez+'*))\\k<'+grName+'>'+any+')??'
+     // уберем any, потом уберем замедляющие знаки вопроса
+    //потому что вопросы именно из-за итого, что первый мы проверить никак не можем
+     
+      bez = ['(', any,...bez,')'].join('')
+      max = '(?=(?<'+grName+'>'+bez+'*))\\k<'+grName+'>'
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+      return max
+
+    }
+
+  //  let testr =  '\\('+maxBez('fn5', '\\(')
+//не показывает а потому что первая открытая скобка
+
+
+
+
+
+    console. log(list(insideScript[0], testr))
+    
+    
+
+  })
+
+
+</script>
